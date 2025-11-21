@@ -4,15 +4,13 @@ from interfaces import IExtractor
 from typing import List, Any, Dict
 
 class PlumberGridExtractor(IExtractor):
-    """
-    Extracts tables from PDFs using pdfplumber's grid detection strategies.
-    Iterates through all pages in the PDF.
-    """
     def __init__(self, settings: Dict[str, Any] = None):
-        # Default settings tuned for the groundwater report grid structure
+        # UPDATED SETTINGS:
+        # 1. vertical_strategy="lines": We trust the vertical lines to separate columns (Jan, Feb, Mar).
+        # 2. horizontal_strategy="text": We use TEXT positions to separate rows, because the PDF lacks horizontal lines between data rows.
         self.settings = settings or {
             "vertical_strategy": "lines", 
-            "horizontal_strategy": "lines",
+            "horizontal_strategy": "text",  # <--- CHANGED FROM "lines" TO "text"
             "snap_tolerance": 3,
             "intersection_x_tolerance": 5,
         }
@@ -30,22 +28,28 @@ class PlumberGridExtractor(IExtractor):
                 for i, page in enumerate(pdf.pages):
                     page_label = f"Page {i + 1}"
                     
-                    # Extract tables using the strict grid settings
+                    # Extract tables using the updated hybrid settings
                     tables = page.extract_tables(self.settings)
                     
                     if not tables:
-                        print(f"Debug: No tables found on {page_label}. Skipping.")
+                        print(f"Debug: No tables found on {page_label}. Trying fallback strategy...")
+                        # Fallback: If lines strategy fails completely, try pure text strategy
+                        # This helps if the PDF has NO lines at all (e.g., whitespace only)
+                        fallback_settings = {
+                            "vertical_strategy": "text",
+                            "horizontal_strategy": "text",
+                            "snap_tolerance": 3,
+                        }
+                        tables = page.extract_tables(fallback_settings)
+                    
+                    if not tables:
+                        print(f"Debug: Still no tables found on {page_label}. Skipping.")
                         continue
 
-                    # Consolidate all tables on this page into one list
                     page_rows = []
                     for table in tables:
-                        # Clean 'None' values which pdfplumber produces for empty cells
                         cleaned_table = [[cell if cell is not None else "" for cell in row] for row in table]
                         page_rows.extend(cleaned_table)
-                        
-                        # CRITICAL FIX: Removed the spacer row that corrupted data analysis
-                        # page_rows.append([]) <-- DELETED
 
                     extracted_content[page_label] = page_rows
                     
