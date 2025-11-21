@@ -1,4 +1,4 @@
-from .interfaces import IExtractor, IExporter
+from interfaces import IExtractor, IExporter
 
 class PDFTablePipeline:
     def __init__(self, extractor: IExtractor, exporter: IExporter):

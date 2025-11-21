@@ -1,5 +1,5 @@
 import pandas as pd
-from .interfaces import IExporter
+from interfaces import IExporter
 from typing import List, Any, Dict
 
 class PandasMultiSheetExporter(IExporter):

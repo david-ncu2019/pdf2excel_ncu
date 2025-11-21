@@ -1,6 +1,6 @@
 import pdfplumber
 import os
-from .interfaces import IExtractor
+from interfaces import IExtractor
 from typing import List, Any, Dict
 
 class PlumberGridExtractor(IExtractor):
@@ -44,8 +44,8 @@ class PlumberGridExtractor(IExtractor):
                         cleaned_table = [[cell if cell is not None else "" for cell in row] for row in table]
                         page_rows.extend(cleaned_table)
                         
-                        # Add a visual spacer row between distinct tables on the same page
-                        page_rows.append([])
+                        # CRITICAL FIX: Removed the spacer row that corrupted data analysis
+                        # page_rows.append([]) <-- DELETED
 
                     extracted_content[page_label] = page_rows
                     

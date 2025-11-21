@@ -1,29 +1,34 @@
 import os
 import sys
-from pdf_processor.extractors import PlumberGridExtractor
-from pdf_processor.exporters import PandasMultiSheetExporter
-from pdf_processor.pipeline import PDFTablePipeline
+
+# Ensure the current directory is in the python path
+# This fixes "ModuleNotFoundError" when running the script directly
+current_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(current_dir)
+
+from extractor import PlumberGridExtractor
+from exporter import PandasMultiSheetExporter
+from pipeline import PDFTablePipeline
 
 def main():
     # Configuration
+    # You can change this to match your actual file name
     input_pdf = "groundwater_report.pdf"
     output_xlsx = "groundwater_report.xlsx"
 
-    # Command line argument support (Optional)
+    # Command line argument support
     if len(sys.argv) > 1:
         input_pdf = sys.argv[1]
-        output_xlsx = input_pdf.replace(".pdf", ".xlsx")
+        if input_pdf.lower().endswith('.pdf'):
+            output_xlsx = input_pdf[:-4] + ".xlsx"
 
     if not os.path.exists(input_pdf):
         print(f"Error: The file '{input_pdf}' was not found.")
-        print("Please ensure the file exists or pass the filename as an argument.")
+        print("Usage: python main.py <your_file.pdf>")
         return
 
     # Initialize the components
-    # We use the GridExtractor for table-heavy PDFs
     extractor = PlumberGridExtractor()
-    
-    # We use the MultiSheetExporter to map Pages -> Sheets
     exporter = PandasMultiSheetExporter()
 
     # Run the pipeline
